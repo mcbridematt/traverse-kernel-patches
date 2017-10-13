@@ -1,0 +1,256 @@
+From 224dd1e183d4fd73f62152dc60769a386a9e3a08 Mon Sep 17 00:00:00 2001
+From: Mathew McBride <matt@traverse.com.au>
+Date: Mon, 16 Oct 2017 02:49:23 +0000
+Subject: [PATCH] arm64: dts: Add device tree for Traverse LS1043-V board (NXP
+ LS1043A Processor)
+
+Signed-off-by: Mathew McBride <matt@traverse.com.au>
+---
+ arch/arm64/boot/dts/freescale/Makefile             |   4 +-
+ arch/arm64/boot/dts/freescale/traverse-ls1043v.dts | 219 +++++++++++++++++++++
+ 2 files changed, 222 insertions(+), 1 deletion(-)
+ create mode 100644 arch/arm64/boot/dts/freescale/traverse-ls1043v.dts
+
+diff --git a/arch/arm64/boot/dts/freescale/Makefile b/arch/arm64/boot/dts/freescale/Makefile
+index 72c4b525726f..f3940a3db18f 100644
+--- a/arch/arm64/boot/dts/freescale/Makefile
++++ b/arch/arm64/boot/dts/freescale/Makefile
+@@ -12,7 +12,9 @@ dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls2080a-rdb.dtb
+ dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls2080a-simu.dtb
+ dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls2088a-qds.dtb
+ dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls2088a-rdb.dtb
+- 
++
++dtb-$(CONFIG_ARCH_LAYERSCAPE) += traverse-ls1043v.dtb
++
+ always		:= $(dtb-y)
+ subdir-y	:= $(dts-dirs)
+ clean-files	:= *.dtb
+diff --git a/arch/arm64/boot/dts/freescale/traverse-ls1043v.dts b/arch/arm64/boot/dts/freescale/traverse-ls1043v.dts
+new file mode 100644
+index 000000000000..247600b06875
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/traverse-ls1043v.dts
+@@ -0,0 +1,219 @@
++/*
++ * Device Tree Include file for Freescale Layerscape-1043A family SoC.
++ *
++ * Copyright 2014-2015, Freescale Semiconductor
++ *
++ * Mingkai Hu <Mingkai.hu@freescale.com>
++ *
++ * This file is dual-licensed: you can use it either under the terms
++ * of the GPLv2 or the X11 license, at your option. Note that this dual
++ * licensing only applies to this file, and not this project as a
++ * whole.
++ *
++ *  a) This library is free software; you can redistribute it and/or
++ *     modify it under the terms of the GNU General Public License as
++ *     published by the Free Software Foundation; either version 2 of the
++ *     License, or (at your option) any later version.
++ *
++ *     This library is distributed in the hope that it will be useful,
++ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *     GNU General Public License for more details.
++ *
++ * Or, alternatively,
++ *
++ *  b) Permission is hereby granted, free of charge, to any person
++ *     obtaining a copy of this software and associated documentation
++ *     files (the "Software"), to deal in the Software without
++ *     restriction, including without limitation the rights to use,
++ *     copy, modify, merge, publish, distribute, sublicense, and/or
++ *     sell copies of the Software, and to permit persons to whom the
++ *     Software is furnished to do so, subject to the following
++ *     conditions:
++ *
++ *     The above copyright notice and this permission notice shall be
++ *     included in all copies or substantial portions of the Software.
++ *
++ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
++ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
++ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ *     OTHER DEALINGS IN THE SOFTWARE.
++ */
++
++/dts-v1/;
++#include "fsl-ls1043a.dtsi"
++#include <dt-bindings/gpio/gpio.h>
++
++/ {
++	model = "Traverse LS1043V";
++	compatible = "traverse,ls1043v";
++
++	aliases {
++		crypto = &crypto;
++		ethernet0 = &EMAC0;
++		ethernet1 = &EMAC1;
++		ethernet2 = &EMAC2;
++		ethernet3 = &EMAC3;
++		ethernet4 = &EMAC4;
++		ethernet5 = &EMAC5;
++		pca9555 = &pca9555;
++	};
++
++	leds {
++		compatible = "gpio-leds";
++		gpio0 {
++			label = "ls1043v:green:user0";
++			gpios = <&pca9555 0 GPIO_ACTIVE_HIGH>;
++		};
++		gpio1 {
++			label = "ls1043v:yellow:user0";
++			gpios = <&pca9555 1 GPIO_ACTIVE_HIGH>;
++		};
++		gpio2 {
++			label = "ls1043v:green:user1";
++			gpios = <&pca9555 2 GPIO_ACTIVE_HIGH>;
++		};
++		gpio3 {
++			label = "ls1043v:yellow:user1";
++			gpios = <&pca9555 3 GPIO_ACTIVE_HIGH>;
++		};
++		gpio4 {
++			label = "ls1043v:yellow:user2";
++			gpios = <&pca9555 4 GPIO_ACTIVE_HIGH>;
++		};
++		gpio5 {
++			label = "ls1043v:yellow:wlan";
++			gpios = <&pca9555 5 GPIO_ACTIVE_HIGH>;
++		};
++		gpio6 {
++			label = "ls1043v:yellow:wan";
++			gpios = <&pca9555 6 GPIO_ACTIVE_HIGH>;
++		};
++	};
++};
++
++&i2c0 {
++	status = "okay";
++	rtc: rtc@6f {
++		compatible = "isil,isl1208";
++		reg = <0x6f>;
++	};
++
++	pca9555: pca9555@20 {
++		compatible = "nxp,pca9555";
++		gpio-controller;
++		#gpio-cells = <2>;
++		reg = <0x20>;
++		gpio-base = <0>;
++	};
++
++	/* CPU core temp sensor and VDD (1.0V) sensor */
++	ltc2990@4c {
++		compatible = "lltc,ltc2990";
++		reg = <0x4C>;
++		lltc,meas-mode = <4 3>;
++	};
++
++	/* 3.3V and 5V monitor (may not be loaded on some SKUs) */
++	ltc2990@4f {
++		compatible = "lltc,ltc2990";
++		reg = <0x4F>;
++		lltc,meas-mode = <6 3>;
++	};
++	
++};
++
++&ifc {
++	status = "okay";
++	#address-cells = <2>;
++	#size-cells = <1>;
++	/* NOR, NAND Flashes and FPGA on board */
++	ranges = <0x0 0x0 0x0 0x7e800000 0x00010000>;
++
++		nand@1,0 {
++			compatible = "fsl,ifc-nand";
++			#address-cells = <1>;
++			#size-cells = <1>;
++			reg = <0x0 0x0 0x10000>;
++		};
++};
++&duart0 {
++	status = "okay";
++};
++
++&duart1 {
++	status = "okay";
++};
++
++#include "fsl-ls1043-post.dtsi"
++
++&fman0 {
++	EMAC0: ethernet@e0000 {
++		phy-handle = <&qsgmii_phy1>;
++		phy-connection-type = "qsgmii";
++		local-mac-address = [00 04 9F 04 03 92];
++	};
++
++	EMAC1: ethernet@e2000 {
++		phy-handle = <&qsgmii_phy2>;
++		phy-connection-type = "qsgmii";
++		local-mac-address = [00 04 9F 04 03 93];
++	};
++	
++	EMAC2: ethernet@e8000 {
++		phy-handle = <&qsgmii_phy3>;
++		phy-connection-type = "qsgmii";
++		local-mac-address = [00 04 9F 04 03 94];
++	};
++
++	EMAC3: ethernet@ea000 {
++		phy-handle = <&qsgmii_phy4>;
++		phy-connection-type = "qsgmii";
++		local-mac-address = [00 04 9F 04 03 95];
++	};
++	EMAC4: ethernet@e4000 {
++		phy-handle = <&rgmii_phy1>;
++		phy-connection-type = "rgmii";
++		local-mac-address = [00 04 9F 04 03 96];
++	};
++
++	/* Connection to VDSL SoC */
++	EMAC5: ethernet@e6000 {
++		phy-connection-type = "rgmii";
++		local-mac-address = [00 04 9F 04 03 97];
++		fixed-link {
++			speed = <1000>;
++			full-duplex;
++		};
++		/* fixed-link = <0x10 1 1000 0>; */
++	};
++
++	/* 10G XFI interface - not in use on this platform */
++	ethernet@f0000 {
++		status = "disabled";
++	};
++
++	mdio@fc000 {
++		rgmii_phy1: ethernet-phy@3 {
++			reg = <0x3>;
++		};
++		qsgmii_phy1: ethernet-phy@4 {
++			reg = <0x4>;
++		};
++		qsgmii_phy2: ethernet-phy@5 {
++			reg = <0x5>;
++		};
++		qsgmii_phy3: ethernet-phy@6 {
++			reg = <0x6>;
++		};
++		qsgmii_phy4: ethernet-phy@7 {
++			reg = <0x7>;
++		};
++	};
++
++};
++
+-- 
+2.11.1
+
