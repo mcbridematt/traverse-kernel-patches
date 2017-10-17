@@ -15,9 +15,11 @@ CROSS_COMPILE=/home/matt/five64-lede-staging/staging_dir/toolchain-aarch64_gener
 ### Cloning an existing kernel tree
 ```
 KERNEL_GIT=$HOME/linux.git ./build.sh
-
+```
 ## Build artefacts
 ```
 build/kernel.itb -> a FIT image
+
 build/mods -> modules to copy into /lib/modules/
+
 ```
