@@ -1,19 +1,7 @@
-From patchwork Fri Oct 13 14:50:08 2017
-Content-Type: text/plain; charset="utf-8"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Subject: [v2,1/5] fsl/fman: remove of_node
-X-Patchwork-Submitter: Madalin Bucur <madalin.bucur@nxp.com>
-X-Patchwork-Id: 825505
-X-Patchwork-Delegate: davem@davemloft.net
-Message-Id: <1507906212-10076-2-git-send-email-madalin.bucur@nxp.com>
-To: <netdev@vger.kernel.org>, <davem@davemloft.net>
-Cc: <f.fainelli@gmail.com>, <andrew@lunn.ch>,
- <vivien.didelot@savoirfairelinux.com>, <junote@outlook.com>,
- <linux-kernel@vger.kernel.org>
-Date: Fri, 13 Oct 2017 17:50:08 +0300
+From df4e45ea53f8ca87e5dee54eb6ac75dc6a117b49 Mon Sep 17 00:00:00 2001
 From: Madalin Bucur <madalin.bucur@nxp.com>
-List-Id: <netdev.vger.kernel.org>
+Date: Mon, 16 Oct 2017 21:36:05 +0300
+Subject: [PATCH 1/5] fsl/fman: remove of_node
 
 The FMan MAC driver allocates a platform device for the Ethernet
 driver to probe on. Setting pdev->dev.of_node with the MAC node
@@ -28,12 +16,13 @@ fsl_mac dpaa-ethernet.0: __devm_request_mem_region(mac) failed
 fsl_mac: probe of dpaa-ethernet.0 failed with error -16
 
 Signed-off-by: Madalin Bucur <madalin.bucur@nxp.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
 ---
  drivers/net/ethernet/freescale/fman/mac.c | 1 -
  1 file changed, 1 deletion(-)
 
 diff --git a/drivers/net/ethernet/freescale/fman/mac.c b/drivers/net/ethernet/freescale/fman/mac.c
-index 387eb4a..9a265f8 100644
+index 387eb4a88..9a265f862 100644
 --- a/drivers/net/ethernet/freescale/fman/mac.c
 +++ b/drivers/net/ethernet/freescale/fman/mac.c
 @@ -623,7 +623,6 @@ static struct platform_device *dpaa_eth_add_device(int fman_id,
@@ -44,25 +33,16 @@ index 387eb4a..9a265f8 100644
  	pdev->dev.parent = priv->dev;
  	set_dma_ops(&pdev->dev, get_dma_ops(priv->dev));
  
+-- 
+2.11.0
 
-From patchwork Fri Oct 13 14:50:09 2017
-Content-Type: text/plain; charset="utf-8"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Subject: [v2,2/5] dpaa_eth: move of_phy_connect() to the eth driver
-X-Patchwork-Submitter: Madalin Bucur <madalin.bucur@nxp.com>
-X-Patchwork-Id: 825503
-X-Patchwork-Delegate: davem@davemloft.net
-Message-Id: <1507906212-10076-3-git-send-email-madalin.bucur@nxp.com>
-To: <netdev@vger.kernel.org>, <davem@davemloft.net>
-Cc: <f.fainelli@gmail.com>, <andrew@lunn.ch>,
- <vivien.didelot@savoirfairelinux.com>, <junote@outlook.com>,
- <linux-kernel@vger.kernel.org>
-Date: Fri, 13 Oct 2017 17:50:09 +0300
+From c8214aecd998113a4c5402b0aecf630a474ec8c2 Mon Sep 17 00:00:00 2001
 From: Madalin Bucur <madalin.bucur@nxp.com>
-List-Id: <netdev.vger.kernel.org>
+Date: Mon, 16 Oct 2017 21:36:06 +0300
+Subject: [PATCH 2/5] dpaa_eth: move of_phy_connect() to the eth driver
 
 Signed-off-by: Madalin Bucur <madalin.bucur@nxp.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
 ---
  drivers/net/ethernet/freescale/dpaa/dpaa_eth.c | 48 +++++++++++--
  drivers/net/ethernet/freescale/fman/mac.c      | 97 ++++++--------------------
@@ -70,7 +50,7 @@ Signed-off-by: Madalin Bucur <madalin.bucur@nxp.com>
  3 files changed, 66 insertions(+), 84 deletions(-)
 
 diff --git a/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c b/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
-index 4225806..7cf61d6 100644
+index 42258060f..7cf61d62a 100644
 --- a/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
 +++ b/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
 @@ -2435,6 +2435,48 @@ static void dpaa_eth_napi_disable(struct dpaa_priv *priv)
@@ -137,7 +117,7 @@ index 4225806..7cf61d6 100644
  	for (i = 0; i < ARRAY_SIZE(mac_dev->port); i++) {
  		err = fman_port_enable(mac_dev->port[i]);
 diff --git a/drivers/net/ethernet/freescale/fman/mac.c b/drivers/net/ethernet/freescale/fman/mac.c
-index 9a265f8..a0a3107 100644
+index 9a265f862..a0a3107c1 100644
 --- a/drivers/net/ethernet/freescale/fman/mac.c
 +++ b/drivers/net/ethernet/freescale/fman/mac.c
 @@ -57,9 +57,7 @@ struct mac_priv_s {
@@ -353,7 +333,7 @@ index 9a265f8..a0a3107 100644
  	}
  
 diff --git a/drivers/net/ethernet/freescale/fman/mac.h b/drivers/net/ethernet/freescale/fman/mac.h
-index d7313f0..1ca85a1 100644
+index d7313f0c5..1ca85a18a 100644
 --- a/drivers/net/ethernet/freescale/fman/mac.h
 +++ b/drivers/net/ethernet/freescale/fman/mac.h
 @@ -50,6 +50,8 @@ struct mac_device {
@@ -378,23 +358,13 @@ index d7313f0..1ca85a1 100644
  	int (*set_promisc)(struct fman_mac *mac_dev, bool enable);
  	int (*change_addr)(struct fman_mac *mac_dev, enet_addr_t *enet_addr);
  	int (*set_multi)(struct net_device *net_dev,
+-- 
+2.11.0
 
-From patchwork Fri Oct 13 14:50:10 2017
-Content-Type: text/plain; charset="utf-8"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Subject: [v2,3/5] dpaa_eth: change device used
-X-Patchwork-Submitter: Madalin Bucur <madalin.bucur@nxp.com>
-X-Patchwork-Id: 825501
-X-Patchwork-Delegate: davem@davemloft.net
-Message-Id: <1507906212-10076-4-git-send-email-madalin.bucur@nxp.com>
-To: <netdev@vger.kernel.org>, <davem@davemloft.net>
-Cc: <f.fainelli@gmail.com>, <andrew@lunn.ch>,
- <vivien.didelot@savoirfairelinux.com>, <junote@outlook.com>,
- <linux-kernel@vger.kernel.org>
-Date: Fri, 13 Oct 2017 17:50:10 +0300
+From 698ab7e7800dea3bf4f2e6b0ff34d3920b3fd2c5 Mon Sep 17 00:00:00 2001
 From: Madalin Bucur <madalin.bucur@nxp.com>
-List-Id: <netdev.vger.kernel.org>
+Date: Mon, 16 Oct 2017 21:36:07 +0300
+Subject: [PATCH 3/5] dpaa_eth: change device used
 
 Change device used for DMA mapping to the MAC device that is an
 of_device, with proper DMA ops. Using this device for the netdevice
@@ -402,6 +372,7 @@ should also address the issue with DSA scenarios that need the
 netdevice to be backed by an of_device.
 
 Signed-off-by: Madalin Bucur <madalin.bucur@nxp.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
 ---
  drivers/net/ethernet/freescale/dpaa/dpaa_eth.c | 42 ++++++++------------------
  drivers/net/ethernet/freescale/fman/mac.c      | 37 +++++++++--------------
@@ -409,7 +380,7 @@ Signed-off-by: Madalin Bucur <madalin.bucur@nxp.com>
  3 files changed, 27 insertions(+), 53 deletions(-)
 
 diff --git a/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c b/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
-index 7cf61d6..823aa65 100644
+index 7cf61d62a..823aa6597 100644
 --- a/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
 +++ b/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
 @@ -385,34 +385,19 @@ static int dpaa_setup_tc(struct net_device *net_dev, enum tc_setup_type type,
@@ -491,7 +462,7 @@ index 7cf61d6..823aa65 100644
  	dev_set_drvdata(dev, NULL);
  	free_netdev(net_dev);
 diff --git a/drivers/net/ethernet/freescale/fman/mac.c b/drivers/net/ethernet/freescale/fman/mac.c
-index a0a3107..1d6da1e 100644
+index a0a3107c1..1d6da1ea7 100644
 --- a/drivers/net/ethernet/freescale/fman/mac.c
 +++ b/drivers/net/ethernet/freescale/fman/mac.c
 @@ -542,8 +542,7 @@ static const u16 phy2speed[] = {
@@ -650,7 +621,7 @@ index a0a3107..1d6da1e 100644
  	return err;
  }
 diff --git a/drivers/net/ethernet/freescale/fman/mac.h b/drivers/net/ethernet/freescale/fman/mac.h
-index 1ca85a1..eefb335 100644
+index 1ca85a18a..eefb3357e 100644
 --- a/drivers/net/ethernet/freescale/fman/mac.h
 +++ b/drivers/net/ethernet/freescale/fman/mac.h
 @@ -83,7 +83,6 @@ struct mac_device {
@@ -661,31 +632,22 @@ index 1ca85a1..eefb335 100644
  	struct mac_device *mac_dev;
  	int mac_hw_id;
  	int fman_hw_id;
+-- 
+2.11.0
 
-From patchwork Fri Oct 13 14:50:11 2017
-Content-Type: text/plain; charset="utf-8"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Subject: [v2,4/5] dpaa_eth: cleanup dpaa_eth_probe() error paths
-X-Patchwork-Submitter: Madalin Bucur <madalin.bucur@nxp.com>
-X-Patchwork-Id: 825504
-X-Patchwork-Delegate: davem@davemloft.net
-Message-Id: <1507906212-10076-5-git-send-email-madalin.bucur@nxp.com>
-To: <netdev@vger.kernel.org>, <davem@davemloft.net>
-Cc: <f.fainelli@gmail.com>, <andrew@lunn.ch>,
- <vivien.didelot@savoirfairelinux.com>, <junote@outlook.com>,
- <linux-kernel@vger.kernel.org>
-Date: Fri, 13 Oct 2017 17:50:11 +0300
+From ddb6dc9bbac44cf23f3089445a82272be2506637 Mon Sep 17 00:00:00 2001
 From: Madalin Bucur <madalin.bucur@nxp.com>
-List-Id: <netdev.vger.kernel.org>
+Date: Mon, 16 Oct 2017 21:36:08 +0300
+Subject: [PATCH 4/5] dpaa_eth: cleanup dpaa_eth_probe() error paths
 
 Signed-off-by: Madalin Bucur <madalin.bucur@nxp.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
 ---
  drivers/net/ethernet/freescale/dpaa/dpaa_eth.c | 53 ++++++++++----------------
  1 file changed, 20 insertions(+), 33 deletions(-)
 
 diff --git a/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c b/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
-index 823aa65..c6b97a1 100644
+index 823aa6597..c6b97a1b6 100644
 --- a/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
 +++ b/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
 @@ -2695,7 +2695,7 @@ static int dpaa_eth_probe(struct platform_device *pdev)
@@ -841,34 +803,34 @@ index 823aa65..c6b97a1 100644
  	return err;
  }
  
+-- 
+2.11.0
 
-From patchwork Fri Oct 13 14:50:12 2017
-Content-Type: text/plain; charset="utf-8"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Subject: [v2,5/5] fsl/fman: add dpaa in module names
-X-Patchwork-Submitter: Madalin Bucur <madalin.bucur@nxp.com>
-X-Patchwork-Id: 825502
-X-Patchwork-Delegate: davem@davemloft.net
-Message-Id: <1507906212-10076-6-git-send-email-madalin.bucur@nxp.com>
-To: <netdev@vger.kernel.org>, <davem@davemloft.net>
-Cc: <f.fainelli@gmail.com>, <andrew@lunn.ch>,
- <vivien.didelot@savoirfairelinux.com>, <junote@outlook.com>,
- <linux-kernel@vger.kernel.org>
-Date: Fri, 13 Oct 2017 17:50:12 +0300
+From cad6a74b1c7986c59e6cf3991dbbcd82bc857369 Mon Sep 17 00:00:00 2001
 From: Madalin Bucur <madalin.bucur@nxp.com>
-List-Id: <netdev.vger.kernel.org>
+Date: Mon, 16 Oct 2017 21:36:09 +0300
+Subject: [PATCH 5/5] fsl/fman: add dpaa in module names
+
+This change just renames the FMan driver modules, using a common prefix
+for the DPAA FMan and DPAA Ethernet drivers. Besides making the names more
+aligned, this allows writing udev rules that match on either driver name,
+if needed, using the fsl_dpaa_* prefix. The change of netdev dev required
+for the DSA probing makes the previous rules written using this prefix
+fail, this change makes them work again, ensuring backwards compatibility
+for their users.
 
 Signed-off-by: Madalin Bucur <madalin.bucur@nxp.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
 ---
  drivers/net/ethernet/freescale/fman/Makefile | 12 ++++++------
  1 file changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/net/ethernet/freescale/fman/Makefile b/drivers/net/ethernet/freescale/fman/Makefile
-index 2c38119..4ae524a 100644
+index f83a3653b..b618091db 100644
 --- a/drivers/net/ethernet/freescale/fman/Makefile
 +++ b/drivers/net/ethernet/freescale/fman/Makefile
-@@ -1,9 +1,9 @@
+@@ -1,10 +1,10 @@
+ # SPDX-License-Identifier: GPL-2.0
  subdir-ccflags-y +=  -I$(srctree)/drivers/net/ethernet/freescale/fman
  
 -obj-$(CONFIG_FSL_FMAN) += fsl_fman.o
@@ -884,3 +846,6 @@ index 2c38119..4ae524a 100644
 +fsl_dpaa_fman-objs	:= fman_muram.o fman.o fman_sp.o fman_keygen.o
 +fsl_dpaa_fman_port-objs := fman_port.o
 +fsl_dpaa_mac-objs:= mac.o fman_dtsec.o fman_memac.o fman_tgec.o
+-- 
+2.11.0
+

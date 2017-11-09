@@ -1,0 +1,141 @@
+From f1851a69b1f4008a7d29c6e446b3da13ed13b7da Mon Sep 17 00:00:00 2001
+From: Madalin Bucur <madalin.bucur@nxp.com>
+Date: Mon, 16 Oct 2017 21:36:10 +0300
+Subject: [PATCH] dpaa_eth: remove obsolete comment
+
+Comment is no longer valid for a long time now.
+
+Signed-off-by: Madalin Bucur <madalin.bucur@nxp.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+ drivers/net/ethernet/freescale/dpaa/dpaa_eth.c | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c b/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
+index c6b97a1b6e43..a8d0be824149 100644
+--- a/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
++++ b/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
+@@ -2449,10 +2449,6 @@ static int dpaa_phy_init(struct net_device *net_dev)
+ 
+ 	/* Remove any features not supported by the controller */
+ 	phy_dev->supported &= mac_dev->if_support;
+-
+-	/* Enable the symmetric and asymmetric PAUSE frame advertisements,
+-	 * as most of the PHY drivers do not enable them by default.
+-	 */
+ 	phy_dev->supported |= (SUPPORTED_Pause | SUPPORTED_Asym_Pause);
+ 	phy_dev->advertising = phy_dev->supported;
+ 
+-- 
+2.11.1
+
+From f21506cb42112b1c0b391dae7a700e69a42128e8 Mon Sep 17 00:00:00 2001
+From: Arnd Bergmann <arnd@arndb.de>
+Date: Fri, 3 Nov 2017 13:52:24 +0100
+Subject: [PATCH] dpaa_eth: avoid uninitialized variable false-positive warning
+
+We can now build this driver on ARM, so I ran into a randconfig build
+warning that presumably had existed on powerpc already.
+
+drivers/net/ethernet/freescale/dpaa/dpaa_eth.c: In function 'sg_fd_to_skb':
+drivers/net/ethernet/freescale/dpaa/dpaa_eth.c:1712:18: error: 'skb' may be used uninitialized in this function [-Werror=maybe-uninitialized]
+
+I'm slightly changing the logic here, to make it obvious to the
+compiler that 'skb' is always initialized.
+
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+ drivers/net/ethernet/freescale/dpaa/dpaa_eth.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c b/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
+index 969f6b12952e..ebc55b6a6349 100644
+--- a/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
++++ b/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
+@@ -1721,6 +1721,7 @@ static struct sk_buff *sg_fd_to_skb(const struct dpaa_priv *priv,
+ 
+ 	/* Iterate through the SGT entries and add data buffers to the skb */
+ 	sgt = vaddr + fd_off;
++	skb = NULL;
+ 	for (i = 0; i < DPAA_SGT_MAX_ENTRIES; i++) {
+ 		/* Extension bit is not supported */
+ 		WARN_ON(qm_sg_entry_is_ext(&sgt[i]));
+@@ -1738,7 +1739,7 @@ static struct sk_buff *sg_fd_to_skb(const struct dpaa_priv *priv,
+ 		count_ptr = this_cpu_ptr(dpaa_bp->percpu_count);
+ 		dma_unmap_single(dpaa_bp->dev, sg_addr, dpaa_bp->size,
+ 				 DMA_FROM_DEVICE);
+-		if (i == 0) {
++		if (!skb) {
+ 			sz = dpaa_bp->size +
+ 				SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
+ 			skb = build_skb(sg_vaddr, sz);
+-- 
+2.11.1
+
+From a35c52b71580a1fb29df11270b1461f6d17f5670 Mon Sep 17 00:00:00 2001
+From: yuan linyu <Linyu.Yuan@alcatel-sbell.com.cn>
+Date: Wed, 1 Nov 2017 21:10:32 +0800
+Subject: [PATCH] net: dpaa: fix maybe uninitialized var in dpaa_open()
+
+Signed-off-by: yuan linyu <Linyu.Yuan@alcatel-sbell.com.cn>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+ drivers/net/ethernet/freescale/dpaa/dpaa_eth.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c b/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
+index a8d0be824149..68f0ac129ba4 100644
+--- a/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
++++ b/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
+@@ -2468,7 +2468,8 @@ static int dpaa_open(struct net_device *net_dev)
+ 	mac_dev = priv->mac_dev;
+ 	dpaa_eth_napi_enable(priv);
+ 
+-	if (dpaa_phy_init(net_dev))
++	err = dpaa_phy_init(net_dev);
++	if (err)
+ 		goto phy_init_failed;
+ 
+ 	for (i = 0; i < ARRAY_SIZE(mac_dev->port); i++) {
+-- 
+2.11.1
+
+From d7bcde417b6b2e6f99ed9c2c38a0771b66efb060 Mon Sep 17 00:00:00 2001
+From: yuan linyu <Linyu.Yuan@alcatel-sbell.com.cn>
+Date: Wed, 1 Nov 2017 21:11:11 +0800
+Subject: [PATCH] net: dpaa: remove init which already done in per-cpu
+ allocation
+
+Signed-off-by: yuan linyu <Linyu.Yuan@alcatel-sbell.com.cn>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+ drivers/net/ethernet/freescale/dpaa/dpaa_eth.c | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c b/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
+index 68f0ac129ba4..969f6b12952e 100644
+--- a/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
++++ b/drivers/net/ethernet/freescale/dpaa/dpaa_eth.c
+@@ -2669,7 +2669,6 @@ static inline u16 dpaa_get_headroom(struct dpaa_buffer_layout *bl)
+ static int dpaa_eth_probe(struct platform_device *pdev)
+ {
+ 	struct dpaa_bp *dpaa_bps[DPAA_BPS_NUM] = {NULL};
+-	struct dpaa_percpu_priv *percpu_priv;
+ 	struct net_device *net_dev = NULL;
+ 	struct dpaa_fq *dpaa_fq, *tmp;
+ 	struct dpaa_priv *priv = NULL;
+@@ -2815,10 +2814,6 @@ static int dpaa_eth_probe(struct platform_device *pdev)
+ 		err = -ENOMEM;
+ 		goto free_dpaa_fqs;
+ 	}
+-	for_each_possible_cpu(i) {
+-		percpu_priv = per_cpu_ptr(priv->percpu_priv, i);
+-		memset(percpu_priv, 0, sizeof(*percpu_priv));
+-	}
+ 
+ 	priv->num_tc = 1;
+ 	netif_set_real_num_tx_queues(net_dev, priv->num_tc * DPAA_TC_TXQ_NUM);
+-- 
+2.11.1
+
