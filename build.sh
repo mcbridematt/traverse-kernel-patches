@@ -6,6 +6,8 @@ THIS_DIR=`pwd`
 MACHINE=`uname -m`
 echo "Build machine type: $MACHINE"
 CROSS_COMPILE=${CROSS_COMPILE:-}
+GIT_ARGS=${GIT_ARGS:-}
+
 if [ "$MACHINE" != "aarch64" ]; then
 	if [ -z "$CROSS_COMPILE" ]; then
 		echo "Error: When not building on a native aarch64 machine, CROSS_COMPILE must be defined"
@@ -24,7 +26,7 @@ mkdir build
 mkdir -p build/mods/
 KERNEL_GIT=${KERNEL_GIT:-git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git}
 
-git clone $KERNEL_GIT linux
+git clone $GIT_ARGS $KERNEL_GIT linux
 cp kernel-config linux/.config
 cd linux
 for i in `ls ${THIS_DIR}/patches/`; do
