@@ -19,5 +19,5 @@ elif [[ -d "/opt/lede-sdk-armvirt-64_gcc-5.5.0_musl.Linux-x86_64" ]]; then
 fi
 git config --global user.name "CI Build Bot"
 git config --global user.email "devnull@example.com"
-set 
+
 GIT_ARGS="--depth 5" ./build.sh
