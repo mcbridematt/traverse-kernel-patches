@@ -1,8 +1,6 @@
 build:
+    image: registry.gitlab.com/matt_traverse/alpine-kernel-build-base:latest
     script:
-    - sed -i s/deb.debian.org/ftp.au.debian.org/g /etc/apt/sources.list
-    - apt-get update
-    - apt-get install -y build-essential xz-utils bc git wget
     - ./build-ci-wrapper.sh
     artifacts:
         paths:
