@@ -37,5 +37,6 @@ make oldconfig ARCH=arm64
 make -j`nproc` ARCH=arm64
 cp ../kernel.its .
 ./scripts/dtc/dtc kernel.its -O dtb -o kernel.itb
+make ARCH=arm64 INSTALL_PATH=${THIS_DIR}/build/ install
 cp kernel.itb ../build/
 make INSTALL_MOD_PATH=${THIS_DIR}/build/mods/ ARCH=arm64 CROSS_COMPILE=${CROSS_COMPILE} modules_install
