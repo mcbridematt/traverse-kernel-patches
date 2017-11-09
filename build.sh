@@ -5,7 +5,7 @@
 THIS_DIR=`pwd`
 MACHINE=`uname -m`
 echo "Build machine type: $MACHINE"
-CROSS_COMPILE=${CROSS_COMPILE: }
+CROSS_COMPILE=${CROSS_COMPILE:-}
 if [ "$MACHINE" != "aarch64" ]; then
 	if [ -z "$CROSS_COMPILE" ]; then
 		echo "Error: When not building on a native aarch64 machine, CROSS_COMPILE must be defined"
